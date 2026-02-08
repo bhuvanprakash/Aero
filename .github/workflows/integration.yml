@@ -1,0 +1,102 @@
+name: Integration
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  interop:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python package
+        run: pip install -e "py/"
+
+      - name: Build C++
+        run: |
+          cmake -S cpp -B cpp/build -DCMAKE_BUILD_TYPE=Release
+          cmake --build cpp/build -j2
+
+      - name: Python writes, C++ reads (single-file)
+        shell: bash
+        run: |
+          python -m aerotensor.cli make-test-vector /tmp/test.aero
+          cpp/build/aero_validate --full /tmp/test.aero
+          cpp/build/aero_extract_tensor /tmp/test.aero "linear.weight" /tmp/w.bin
+
+          python -c "
+          import struct
+          expected = struct.pack('<6f', 1,2,3,4,5,6)
+          actual = open('/tmp/w.bin','rb').read()
+          assert actual == expected, 'single-file mismatch'
+          print('Single-file interop: OK')
+          "
+
+      - name: Python writes multi-shard, C++ reads
+        shell: bash
+        run: |
+          python -c "
+          from aerotensor.writer import AeroWriter, TensorSpec
+          from aerotensor.format import DType
+          import numpy as np
+          specs = []
+          for i in range(3):
+              a = np.array([float(i+1)]*3, dtype='<f4')
+              raw = a.tobytes()
+              specs.append(TensorSpec(
+                  name=f't{i}', dtype=int(DType.F32), shape=[3],
+                  data_len=len(raw), read_data=lambda r=raw: r))
+          AeroWriter(file_uuid=b'\x77'*16).write_model(
+              '/tmp/multi.aero', specs, 'test', 'mlp', max_shard_bytes=15)
+          "
+          cpp/build/aero_validate /tmp/multi.aero
+          cpp/build/aero_extract_tensor /tmp/multi.aero "t1" /tmp/t1.bin
+
+          python -c "
+          import struct
+          vals = struct.unpack('<3f', open('/tmp/t1.bin','rb').read())
+          assert vals == (2.0,2.0,2.0), f'mismatch: {vals}'
+          print('Multi-shard interop: OK')
+          "
+
+      - name: Python writes AEROSET, C++ reads
+        shell: bash
+        run: |
+          python -c "
+          from aerotensor.aeroset import write_aeroset
+          from aerotensor.writer import TensorSpec
+          from aerotensor.format import DType
+          import numpy as np
+          specs = []
+          for i in range(4):
+              a = np.array([float(i)]*4, dtype='<f4')
+              raw = a.tobytes()
+              specs.append(TensorSpec(
+                  name=f'l{i}', dtype=int(DType.F32), shape=[4],
+                  data_len=len(raw), read_data=lambda r=raw: r))
+          write_aeroset('/tmp/aset', specs, 'test', 'mlp',
+                        max_shard_bytes=20, max_part_shards=2,
+                        uuid=b'\x55'*16)
+          "
+          cpp/build/aero_inspect_set /tmp/aset/model.aeroset.json
+          cpp/build/aero_extract_tensor_set /tmp/aset/model.aeroset.json "l2" /tmp/l2.bin
+
+          python -c "
+          import struct
+          vals = struct.unpack('<4f', open('/tmp/l2.bin','rb').read())
+          assert vals == (2.0,2.0,2.0,2.0), f'mismatch: {vals}'
+          print('AEROSET interop: OK')
+          "
+
+      - name: Run full Python test suite
+        run: python -m pytest py/tests/ -v

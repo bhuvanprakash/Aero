@@ -1,0 +1,5 @@
+numpy
+msgpack
+blake3
+zstandard
+pytest

@@ -1,0 +1,49 @@
+name: C++
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -S cpp -B cpp/build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build cpp/build --config Release -j2
+
+      - name: Generate test vector (Python)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python package
+        run: pip install -e "py/"
+
+      - name: Run CLI tools
+        shell: bash
+        run: |
+          python -m aerotensor.cli make-test-vector /tmp/test.aero
+
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            EXT=".exe"
+            BUILD_DIR="cpp/build/Release"
+          else
+            EXT=""
+            BUILD_DIR="cpp/build"
+          fi
+
+          "${BUILD_DIR}/aero_inspect${EXT}" /tmp/test.aero
+          "${BUILD_DIR}/aero_validate${EXT}" --full /tmp/test.aero
+          "${BUILD_DIR}/aero_list_tensors${EXT}" /tmp/test.aero
+          "${BUILD_DIR}/aero_extract_tensor${EXT}" /tmp/test.aero "linear.weight" /tmp/w.bin
+          echo "C++ tools: OK"

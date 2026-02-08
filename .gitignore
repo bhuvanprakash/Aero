@@ -1,0 +1,36 @@
+# Python (py/)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+py/build/
+py/dist/
+py/*.egg-info/
+py/.eggs/
+.pytest_cache/
+.coverage
+htmlcov/
+venv/
+.venv/
+env/
+
+# C++ (cpp/)
+cpp/build/
+
+# validation/ — format_validation.py and format_benchmark.py outputs
+validation/demo_single.aero
+validation/demo_sharded.aero
+validation/demo_sharded2.aero
+validation/demo_dup.aero
+validation/demo_aeroset/
+validation/*.corrupt_demo
+validation/*.trunc_demo
+validation/compare_*
+
+# OS / editor
+.DS_Store
+*.tmp
+*.temp
+.idea/
+.vscode/
