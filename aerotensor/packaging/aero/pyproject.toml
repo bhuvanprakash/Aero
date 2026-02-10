@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aero"
+version = "0.2.0"
+description = "AERO format and runtime — one install for format library and inference"
+requires-python = ">=3.9"
+license = {text = "Apache-2.0"}
+readme = "README.md"
+authors = [{name = "AERO Contributors"}]
+urls = { Homepage = "https://github.com/Aero-HQ/aerotensor", Repository = "https://github.com/Aero-HQ/aerotensor" }
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "aerotensor>=0.2.0",
+    "aero-runtime[inference]>=0.1.0",
+]
+
+[project.optional-dependencies]
+# Base already includes inference; add extras if needed later
+dev = ["pytest"]
+
+[tool.setuptools.packages.find]
+include = ["aero*"]

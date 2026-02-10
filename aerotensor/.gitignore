@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+packaging/aero/build/
+packaging/aero/dist/
+packaging/aero/*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+venv/
+.venv/
+env/
+
+# OS / editor
+.DS_Store
+*.tmp
+*.temp
+.idea/
+.vscode/

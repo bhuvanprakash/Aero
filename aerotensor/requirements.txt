@@ -1,0 +1,5 @@
+numpy
+msgpack
+zstandard
+pytest
+# Optional: pip install aerotensor[verify] for blake3 (integrity check when reading; required for writing)
