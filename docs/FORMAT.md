@@ -86,8 +86,10 @@ NUL-separated UTF-8 names, padded with zeros to an 8-byte boundary.
 
 | FourCC | Role             | Compression | Notes                         |
 |--------|------------------|-------------|-------------------------------|
+| IHSH   | Control integrity| **Never**   | Optional; BLAKE3 over header+TOC+string table (see [AIP-0001](AIP-0001-IHSH.md)) |
 | MJSN   | JSON metadata    | Optional    | Human-readable                |
 | MMSG   | Manifest (msgpack)| Recommended | Forward-compatible manifest   |
+| PHSH   | Page hashes      | **Never**   | Optional; per-page BLAKE3 for a WTSH shard (see [AIP-0002](AIP-0002-PHSH.md)) |
 | TIDX   | Tensor index     | Recommended | Maps tensor name → shard/offset |
 | WTSH   | Weight shard     | **Never**   | Raw bytes, mmap-critical      |
 
@@ -163,3 +165,10 @@ Readers and writers enforce the following caps so that invalid or malicious file
 **For more than ~40M tensors** you would need one or both of:
 - A **streaming TIDX writer** that does not materialise the full index in memory.
 - A **multi-level index** (e.g. sharded TIDX or external index) and format extension; not defined in v0.1.
+
+## Optional integrity chunks
+
+- **IHSH (AIP-0001):** Optional chunk storing a BLAKE3-256 digest over the control region (header + TOC + string table). Enables `validate --control` to detect tampering or corruption of the file layout. See [AIP-0001-IHSH.md](AIP-0001-IHSH.md).
+- **PHSH (AIP-0002):** Optional chunk per WTSH shard storing per-page BLAKE3-256 digests. Enables page-level verification for streaming or partial reads. See [AIP-0002-PHSH.md](AIP-0002-PHSH.md).
+
+Both are additive and backward compatible; readers that do not support them skip by fourcc/optional flag.
