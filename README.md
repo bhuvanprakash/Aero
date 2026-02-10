@@ -1,9 +1,9 @@
-# AERO — A Chunked Model Container Format
+# AERO
 
-AERO is a minimal, deterministic binary format for packaging machine-learning
-model weights and metadata into a single file (or multi-file set).  It is
-designed for **fast loading**, **safe parsing**, and **zero-copy weight
-access** via `mmap`.
+**AERO** is a chunked model container format and runtime ecosystem for packaging
+machine-learning model weights and metadata into a single file (`.aero`) or
+multi-file set (AEROSET).  It is designed for **fast loading**, **safe parsing**,
+and **zero-copy weight access** via `mmap`.
 
 **Versioning (no confusion):**
 - **AERO binary container:** version **0.1** (header magic, TOC, chunk layout).
@@ -17,16 +17,45 @@ access** via `mmap`.
 From a **fresh clone**:
 
 ```bash
-git clone https://github.com/bhuvanprakash/Aero.git && cd Aero
-pip install -e py/
+git clone https://github.com/Aero-HQ/Aero.git && cd Aero
+pip install -e format/
 aerotensor make-test-vector /tmp/test.aero
 aerotensor validate --full /tmp/test.aero
 aerotensor inspect /tmp/test.aero
 ```
 
-(Or install from PyPI: `pip install aerotensor`.)
+(PyPI: coming soon. For now use the source install above.)
 
-Prebuilt C++ tools and Python wheels are attached to [GitHub Releases](https://github.com/bhuvanprakash/Aero/releases) on each tag.
+### Repository layout (organization-style)
+
+| Folder | Contents | PyPI |
+|--------|----------|------|
+| **format/** | AERO format library (read/write `.aero`, convert GGUF/safetensors) | `aerotensor` |
+| **runtime/** | Inference runtime — load `.aero` and run models | `aero-runtime` |
+| **packaging/** | PyPI meta package and publish instructions | `aero` (optional bundle) |
+| **cpp/** | C++ reader, tools, shared library | — |
+
+One-line install for users: `pip install aero` (from [packaging/](packaging/)) or install format and runtime separately.
+
+### Run inference from .aero (aero-runtime)
+
+Install the runtime in one go and run models directly from `.aero` files (no conversion back to GGUF):
+
+```bash
+python scripts/install_runtime.py   # friendly progress + time (recommended)
+# or: pip install -e format/ && pip install -e runtime/
+aero-run validation/ollama_bench_out/qwen3_1_7b.aero --prompt "What is 2+2?" --model-id Qwen/Qwen3-1.7B
+```
+
+Or from the repo with the demo script:
+
+```bash
+./run_aero_demo.sh validation/ollama_bench_out/qwen3_1_7b.aero --prompt "Hello!"
+```
+
+See [runtime/README.md](runtime/README.md) for the full aero-runtime API and options.
+
+Prebuilt C++ tools and Python wheels are attached to [GitHub Releases](https://github.com/Aero-HQ/Aero/releases) on each tag.
 
 ---
 
@@ -71,6 +100,11 @@ directly `mmap`'d into GPU/CPU memory without a copy or decompression step.
 | Per-chunk BLAKE3 integrity | ✓ |
 | Streaming write (one tensor in memory at a time) | ✓ |
 | CI: Linux / macOS / Windows | ✓ |
+| **aero-runtime** — run inference from .aero | ✓ |
+| **C ABI** (aero_load, aero_tensor_ptr, etc.) + shared lib (libaero.so / .dylib / .dll) | ✓ |
+| **Single-header** (aero_capi.h / aero_runtime.h) for embedding | ✓ |
+
+**Benchmarks:** Load time and peak memory (open / read_all / mmap) — see [BENCHMARKS.md](BENCHMARKS.md). *Why AERO?* → [docs/WHY_AERO.md](docs/WHY_AERO.md). Minimal example: [examples/inference_with_aero.py](examples/inference_with_aero.py).
 
 ---
 
@@ -115,6 +149,11 @@ aerotensor inspect /tmp/test.aero
 
 # Validate all chunk hashes
 aerotensor validate /tmp/test.aero
+
+# Zero-copy: use read_tensor_view() for a memoryview; read_tensor_bytes() copies.
+
+# Compare two .aero files (tensor set + byte/numeric diff)
+aerotensor diff model_a.aero model_b.aero --verbose --numeric
 
 # Run tests
 pytest tests/ -q
@@ -206,7 +245,7 @@ dependency details.
 
 ## Testing
 
-- **Unit/integration:** `pytest py/tests/ -v`
+- **Unit/integration:** `pytest format/tests/ -v`
 - **Format validation:** `python validation/format_validation.py`
 - **Format benchmark:** `python validation/format_benchmark.py`
 
@@ -222,6 +261,14 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for full test and C++ build instructions.
 - [SECURITY.md](docs/SECURITY.md) – Bounds checking and safety philosophy
 - [COMPAT.md](docs/COMPAT.md) – v0.1 compatibility rules and extension policy
 - [ADOPTION.md](docs/ADOPTION.md) – Using AERO in other projects (loader adapter, CI convert, AEROSET vs single-file)
+- [RUNTIME_SPEC.md](docs/RUNTIME_SPEC.md) – Minimal C ABI for load/tensor access (zero-copy, FFI-friendly) + future GPU API design
+- [RUNTIME_ROADMAP.md](docs/RUNTIME_ROADMAP.md) – Runtime roadmap (current state, C ABI wrapper, zero-copy GPU, native loaders)
+- [DROP_IN_REPLACEMENT.md](docs/DROP_IN_REPLACEMENT.md) – Replace safetensors/GGUF with AERO in Hugging Face, llama.cpp, vLLM
+- [GROWTH_ROADMAP.md](docs/GROWTH_ROADMAP.md) – 7-phase plan: runtime → benchmarks → adoption → aero.dev → premium → monetization
+- [BENCHMARKS.md](BENCHMARKS.md) – How to run load/memory benchmarks and compare AERO vs GGUF/safetensors
+- [docs/WHY_AERO.md](docs/WHY_AERO.md) – “Why we built AERO” (blog-style)
+- [docs/WHY_AERO_BENCHMARKS.md](docs/WHY_AERO_BENCHMARKS.md) – Benchmark scripts and evidence
+- [examples/](examples/) – Minimal inference example
 - [CONTRIBUTING.md](CONTRIBUTING.md) – How to run tests, build C++, and submit changes
 
 ---

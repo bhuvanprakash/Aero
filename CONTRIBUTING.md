@@ -2,19 +2,19 @@
 
 We’re on Apache 2.0. Contributions are welcome.
 
-**Repo:** [github.com/bhuvanprakash/Aero](https://github.com/bhuvanprakash/Aero)
+**Repo:** [github.com/Aero-HQ/Aero](https://github.com/Aero-HQ/Aero)
 
 ## Get started
 
 1. **Clone the repo**
    ```bash
-   git clone https://github.com/bhuvanprakash/Aero.git
+   git clone https://github.com/Aero-HQ/Aero.git
    cd Aero
    ```
 
 2. **Install the Python package (editable)**
    ```bash
-   pip install -e "py/.[dev]"
+   pip install -e "format/.[dev]"
    ```
    This installs `aerotensor` and dev dependencies (e.g. pytest).
 
@@ -29,7 +29,7 @@ We’re on Apache 2.0. Contributions are welcome.
 
 - **Unit / integration tests**
   ```bash
-  pytest py/tests/ -v
+  pytest format/tests/ -v
   ```
 
 - **Format validation** (single/sharded/AEROSET, integrity, determinism, corruption checks)
@@ -56,21 +56,21 @@ See `cpp/README_CPP.md` for dependencies and options.
 
 1. For bigger changes, open an issue first or comment on an existing one.
 2. Fork, branch, make your changes.
-3. Run the tests above (at least `pytest py/tests/` and `python validation/format_validation.py`).
+3. Run the tests above (at least `pytest format/tests/` and `python validation/format_validation.py`).
 4. Open a pull request. In the description, mention what changed and how you tested it.
 
 By submitting a PR, you agree that your contributions are licensed under the Apache License 2.0.
 
 ## Code and docs
 
-- **Python:** Follow the existing style (e.g. `py/aerotensor/`). Type hints and docstrings are welcome.
+- **Python:** Follow the existing style (e.g. `format/aerotensor/`). Type hints and docstrings are welcome.
 - **C++:** Match the style in `cpp/src/` and `cpp/include/`.
 - **Docs:** Update `docs/` and `README.md` if you change behaviour or add features.
 
 ## Before pushing to GitHub
 
-- [ ] Clone URLs in README and this file point to your repo (already set to bhuvanprakash/Aero).
-- [ ] Run `pytest py/tests/ -v` and `python validation/format_validation.py`; both should pass.
+- [ ] Clone URLs in README and this file point to your repo (Aero-HQ/Aero).
+- [ ] Run `pytest format/tests/ -v` and `python validation/format_validation.py`; both should pass.
 - [ ] Don’t commit `.env`, API keys, or other secrets.
 - [ ] If you still have a `modeltesting/` folder locally, you can delete it—everything lives in `validation/` now and `modeltesting/` is gitignored.
 
